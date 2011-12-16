@@ -17,9 +17,6 @@ class SimpleWiimote
     puts 'Put Wiimote in discoverable mode now (press 1+2)...'
     @wiimote = WiiMote.new
     @wiimote.rpt_mode = WiiMote::RPT_BTN | WiiMote::RPT_ACC
-    def @wiimote.active=(bool)
-      @active = bool
-    end
 
     @wiimote.active = false
     @events = {}
