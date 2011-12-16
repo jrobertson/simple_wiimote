@@ -46,7 +46,7 @@ class SimpleWiimote
       if @wiimote.buttons > 0  then
         if @wiimote.buttons != old_btn then
           r = @events[@wiimote.buttons]
-          r.call if r
+          (old_btn = 0; r.call; sleep 0.2) if r
           old_btn = @wiimote.buttons
 
         else
