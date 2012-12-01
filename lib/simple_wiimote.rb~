@@ -4,9 +4,7 @@
 
 require 'cwiid'
 
-class WiiMote
-  attr_accessor :active
-end
+class WiiMote  attr_accessor :active  end
 
 class SimpleWiimote
 
@@ -45,9 +43,9 @@ class SimpleWiimote
       yield(@wiimote) if block_given?  
 
       if @wiimote.buttons > 0  then
-        r = @events[@wiimote.buttons]
-        sleep 0.2
-        r.call  if r
+	r = @events[@wiimote.buttons]
+	sleep 0.2
+	r.call  if r
       end
     end until (@wiimote.buttons & @terminator ) != 0  || !@wiimote.active 
   end
