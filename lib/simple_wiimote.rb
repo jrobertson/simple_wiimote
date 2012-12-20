@@ -10,7 +10,7 @@ end
 
 class SimpleWiimote
 
-  attr_accessor :terminator, :events, :led, :rumble
+  attr_accessor :terminator, :led, :rumble
 
   def initialize()
 
@@ -19,26 +19,27 @@ class SimpleWiimote
     @wiimote = WiiMote.new
     @wiimote.rpt_mode = WiiMote::RPT_BTN | WiiMote::RPT_ACC
     @wiimote.active = false
+            
+    btn_states = %w(press down up)
+    buttons = %w(2 1 b a minus void1 void2 home left right down up plus)
+    
+    @events = buttons.inject({}) do |r,x|
+      
+      h = btn_states.inject({}) do |r,state|
         
-    @events = {
-      '2'     => lambda {|wm| puts 'you pressed 2'}, 
-      '1'     => lambda {|wm| puts 'you pressed 1'},
-      'b'     => lambda {|wm| puts 'you pressed b'},
-      'a'     => lambda {|wm| puts 'you pressed a'},
-      'minus' => lambda {|wm| puts 'you pressed minus'},
-      'void1' => nil,
-      'void2' => nil,
-      'home'  => lambda {|wm| puts 'you pressed home'},
-      'left'  => lambda {|wm| puts 'you pressed left'},
-      'right' => lambda {|wm| puts 'you pressed right'},
-      'down'  => lambda {|wm| puts 'you pressed down'},
-      'up'    => lambda {|wm| puts 'you pressed up'},
-      'plus'  => {
-        on_buttonpress: lambda {|wm| puts 'you pressed plus'},
-        on_buttondown: lambda {|wm| puts wm.acc.inspect},                  
-        on_buttonup:   lambda {|wm| puts 'plus button raised'}
-      }
-    }
+        label = ("on_button" + state).to_sym
+
+        event = lambda do |wm| 
+          method_name = ("on_btn_%s_%s" % [x, state]).to_sym
+          method(method_name).call(wm) if self.respond_to? method_name
+        end
+
+        r.merge label => event
+      end
+      r.merge x => h
+    end
+
+    @events['void1'] = @events['void2'] = nil    
 
     @terminator = ['1','2']
   end
@@ -47,20 +48,11 @@ class SimpleWiimote
     
     previously_pressed, pressed = [], []
     
-    procs_press = {
-      Hash: proc {|x, wiimote| x[:on_buttonpress].call(wiimote)}, 
-      Proc: proc {|x, wiimote| x.call(wiimote)}
+    button = {
+        press: proc   {|x, wiimote| x[:on_buttonpress].call wiimote},
+         down: lambda {|x, wiimote| x[:on_buttondown].call  wiimote},
+           up: proc   {|x, wiimote| x[:on_buttonup].call    wiimote}
     }
-    
-    procs_down = {
-      Hash: lambda {|x, wiimote| x[:on_buttondown].call(wiimote)}, 
-      Proc: proc { }
-    }        
-    
-    procs_up = {
-      Hash: proc {|x, wiimote| x[:on_buttonup].call(wiimote)}, 
-      Proc: proc { }
-    }      
     
     begin
       
@@ -90,15 +82,15 @@ class SimpleWiimote
         previously_pressed = pressed      
 
         new_keypresses.each do |x| 
-          procs_press[@events[x].class.to_s.to_sym].call(@events[x], @wiimote)
+          button[:press].call(@events[x], @wiimote)
         end
         
         pressed.each do |x|
-          procs_down[@events[x].class.to_s.to_sym].call(@events[x], @wiimote)
+          button[:down].call(@events[x], @wiimote)
         end        
         
         expired_keypresses.each do |x| 
-          procs_up[@events[x].class.to_s.to_sym].call(@events[x], @wiimote)
+          button[:up].call(@events[x], @wiimote)
         end
 
         pressed = []
@@ -109,7 +101,7 @@ class SimpleWiimote
           expired_keypresses = previously_pressed
 
           expired_keypresses.each do |x|
-            procs_up[@events[x].class.to_s.to_sym].call(@events[x], @wiimote)
+            button[:up].call(@events[x], @wiimote)
           end
           
           previously_pressed, expired_keypressed, pressed = [], [], []    
@@ -122,4 +114,25 @@ class SimpleWiimote
   def led=(val)      @led    = @wiimote.led    = val   end
   def rumble=(bool)  @rumble = @wiimote.rumble = bool  end
   def close()        @wiimote.close  end
+    
+  def on_btn_2_press(wm)      puts 'button 2 pressed'     end
+  def on_btn_1_press(wm)      puts 'button 1 pressed'     end
+  def on_btn_b_press(wm)      puts 'button b pressed'     end
+  def on_btn_a_press(wm)      puts 'button a pressed'     end
+  def on_btn_minus_press(wm)  puts 'button minus pressed' end
+  def on_btn_void1_press(wm)  puts 'button void1 pressed' end
+  def on_btn_void2_press(wm)  puts 'button void2 pressed' end
+  def on_btn_home_press(wm)   puts 'button home pressed'  end
+  def on_btn_left_press(wm)   puts 'button left pressed'  end
+  def on_btn_right_press(wm)  puts 'button right pressed' end
+  def on_btn_down_press(wm)   puts 'button down pressed'  end
+  def on_btn_up_press(wm)     puts 'button up pressed'    end
+  def on_btn_plus_press(wm)   puts 'button plus pressed'  end
+  
+  def on_btn_b_up(wm)         puts 'button b up'          end
+    
+  def on_btn_b_down(wm)
+    puts 'button b down: ' + wm.acc.inspect       
+  end
+
 end
