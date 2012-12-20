@@ -19,37 +19,94 @@ class SimpleWiimote
     @wiimote = WiiMote.new
     @wiimote.rpt_mode = WiiMote::RPT_BTN | WiiMote::RPT_ACC
     @wiimote.active = false
-    
+        
     @events = {
-      WiiMote::BTN_PLUS =>  -> {puts 'you pressed plus'},
-      WiiMote::BTN_UP   =>  -> {puts 'you pressed up'},
-      WiiMote::BTN_DOWN =>  -> {puts 'you pressed down'},
-      WiiMote::BTN_RIGHT => -> {puts 'you pressed right'},
-      WiiMote::BTN_LEFT =>  -> {puts 'you pressed left'},
-      WiiMote::BTN_HOME =>  -> {puts 'you pressed home'},
-      WiiMote::BTN_MINUS => -> {puts 'you pressed minus'},
-      WiiMote::BTN_A    =>  -> {puts 'you pressed a'},
-      WiiMote::BTN_B    =>  -> {puts 'you pressed b'},
-      WiiMote::BTN_1    =>  -> {puts 'you pressed 1'},
-      WiiMote::BTN_2    =>  -> {puts 'you pressed 2'}
+      '2'     => -> {puts 'you pressed 2'}, 
+      '1'     => -> {puts 'you pressed 1'},
+      'b'     => -> {puts 'you pressed b'},
+      'a'     => -> {puts 'you pressed a'},
+      'minus' => -> {puts 'you pressed minus'},
+      'void1' => nil,
+      'void2' => nil,
+      'home'  => -> {puts 'you pressed home'},
+      'left'  => -> {puts 'you pressed left'},
+      'right' => -> {puts 'you pressed right'},
+      'down'  => -> {puts 'you pressed down'},
+      'up'    => -> {puts 'you pressed up'},
+      'plus'  => {
+        on_buttondown: -> {puts 'you pressed plus'},
+        on_buttonup:   -> {puts 'plus button raised'}
+      }
     }
 
-    @terminator = WiiMote::BTN_A
+    @terminator = ['1','2']
   end
 
   def activate()
     
+    previously_pressed, pressed = [], []
+    
     begin
+      
       @wiimote.get_state
       @wiimote.active = true
       yield(@wiimote) if block_given?  
 
-      if @wiimote.buttons > 0  then
-        r = @events[@wiimote.buttons]
-        sleep 0.2
-        r.call  if r
+      if @wiimote.buttons > 0 then
+
+        val = @wiimote.buttons
+        
+        @events.keys.reverse.each_with_index do |x,i|
+
+          n = @events.length - 1 - i
+          next if x == 32 or x == 64
+          
+          xval = 2**n
+          (val -= xval; pressed << x) if xval <= val
+
+        end
+        
+        @wiimote.active = (not (@terminator & pressed) == @terminator)
+            
+        new_keypresses     = pressed            -  previously_pressed
+        expired_keypresses = previously_pressed -  pressed
+
+        previously_pressed = pressed
+        pressed = []
+
+        procs1 = {
+          Hash: lambda {|x| x[:on_buttondown].call}, 
+          Proc: proc {|x, wiimote| x.call(wiimote)}
+        }
+
+        procs2 = {
+          Hash: lambda {|x| x[:on_buttonup].call}, 
+          Proc: proc {|x| }
+        }
+
+        new_keypresses.each do |x| 
+          procs1[@events[x].class.to_s.to_sym].call(@events[x], @wiimote)
+        end
+        
+        expired_keypresses.each do |x| 
+          procs2[@events[x].class.to_s.to_sym].call(@events[x], @wiimote)
+        end
+        
+      else
+        
+        if previously_pressed.length > 0 then
+          
+          expired_keypresses = previously_pressed
+
+          expired_keypresses.each do |x|
+            procs2[@events[x].class.to_s.to_sym].call(@events[x], @wiimote)
+          end
+          
+          previously_pressed, expired_keypressed, pressed = [], [], []    
+        end
       end
-    end until (@wiimote.buttons & @terminator ) != 0  || !@wiimote.active 
+
+    end until ( not @wiimote.active )
   end
 
   def led=(val)      @led    = @wiimote.led    = val   end

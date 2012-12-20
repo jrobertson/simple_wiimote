@@ -21,21 +21,22 @@ class SimpleWiimote
     @wiimote.active = false
         
     @events = {
-      '2'     => -> {puts 'you pressed 2'}, 
-      '1'     => -> {puts 'you pressed 1'},
-      'b'     => -> {puts 'you pressed b'},
-      'a'     => -> {puts 'you pressed a'},
-      'minus' => -> {puts 'you pressed minus'},
+      '2'     => lambda {|wm| puts 'you pressed 2'}, 
+      '1'     => lambda {|wm| puts 'you pressed 1'},
+      'b'     => lambda {|wm| puts 'you pressed b'},
+      'a'     => lambda {|wm| puts 'you pressed a'},
+      'minus' => lambda {|wm| puts 'you pressed minus'},
       'void1' => nil,
       'void2' => nil,
-      'home'  => -> {puts 'you pressed home'},
-      'left'  => -> {puts 'you pressed left'},
-      'right' => -> {puts 'you pressed right'},
-      'down'  => -> {puts 'you pressed down'},
-      'up'    => -> {puts 'you pressed up'},
+      'home'  => lambda {|wm| puts 'you pressed home'},
+      'left'  => lambda {|wm| puts 'you pressed left'},
+      'right' => lambda {|wm| puts 'you pressed right'},
+      'down'  => lambda {|wm| puts 'you pressed down'},
+      'up'    => lambda {|wm| puts 'you pressed up'},
       'plus'  => {
-        on_buttondown: -> {puts 'you pressed plus'},
-        on_buttonup:   -> {puts 'plus button raised'}
+        on_buttonpress: lambda {|wm| puts 'you pressed plus'},
+        on_buttondown: lambda {|wm| puts wm.acc.inspect},                  
+        on_buttonup:   lambda {|wm| puts 'plus button raised'}
       }
     }
 
@@ -45,6 +46,21 @@ class SimpleWiimote
   def activate()
     
     previously_pressed, pressed = [], []
+    
+    procs_press = {
+      Hash: proc {|x, wiimote| x[:on_buttonpress].call(wiimote)}, 
+      Proc: proc {|x, wiimote| x.call(wiimote)}
+    }
+    
+    procs_down = {
+      Hash: lambda {|x, wiimote| x[:on_buttondown].call(wiimote)}, 
+      Proc: proc { }
+    }        
+    
+    procs_up = {
+      Hash: proc {|x, wiimote| x[:on_buttonup].call(wiimote)}, 
+      Proc: proc { }
+    }      
     
     begin
       
@@ -71,27 +87,21 @@ class SimpleWiimote
         new_keypresses     = pressed            -  previously_pressed
         expired_keypresses = previously_pressed -  pressed
 
-        previously_pressed = pressed
-        pressed = []
-
-        procs1 = {
-          Hash: lambda {|x| x[:on_buttondown].call}, 
-          Proc: lambda {|x| x.call}
-        }
-
-        procs2 = {
-          Hash: lambda {|x| x[:on_buttonup].call}, 
-          Proc: lambda {|x| }
-        }
+        previously_pressed = pressed      
 
         new_keypresses.each do |x| 
-          procs1[@events[x].class.to_s.to_sym].call(@events[x])
+          procs_press[@events[x].class.to_s.to_sym].call(@events[x], @wiimote)
         end
+        
+        pressed.each do |x|
+          procs_down[@events[x].class.to_s.to_sym].call(@events[x], @wiimote)
+        end        
         
         expired_keypresses.each do |x| 
-          procs2[@events[x].class.to_s.to_sym].call(@events[x])
+          procs_up[@events[x].class.to_s.to_sym].call(@events[x], @wiimote)
         end
-        
+
+        pressed = []
       else
         
         if previously_pressed.length > 0 then
@@ -99,7 +109,7 @@ class SimpleWiimote
           expired_keypresses = previously_pressed
 
           expired_keypresses.each do |x|
-            procs2[@events[x].class.to_s.to_sym].call(@events[x])
+            procs_up[@events[x].class.to_s.to_sym].call(@events[x], @wiimote)
           end
           
           previously_pressed, expired_keypressed, pressed = [], [], []    
