@@ -1,81 +1,98 @@
-#Using Simple_wiimote to test the Wiimote in Ruby
+#Introducing the Simple Wiimote gem version 0.3
+
+In this version you are expected to create your own class which inherits from the SimpleWiimote class. e.g.
 
     require 'simple_wiimote'
 
-    swm.led = 1
+    class MyWiimote < SimpleWiimote
 
-    swm.rumble = true #=> true 
-    sleep 0.2
-    swm.rumble = false #=> false 
+    end
 
-    swm.activate # deactivate by pressing button A
-
-output:
-
-    you pressed right
-    you pressed left
-    you pressed up
-    you pressed down
-    you pressed b
-    you pressed minus
-    you pressed home
-    you pressed plus
-    you pressed 1
-    you pressed 2
-    you pressed 2
-    you pressed b
-    you pressed b
-    you pressed b
-    you pressed a
-
-swm.activate # deactive by pressing button B
+    mwm = MyWiimote.new 
+    mwm.activate # to deactivate buttons 1 + 2 are pressed
 
 output:
 
-    you pressed plus
-    you pressed minus
-    you pressed minus
-    you pressed home
-    you pressed b
+    button right pressed
+    button left pressed
+    button down pressed
+    button up pressed
+    button b pressed 
+    button b down: [132, 104, 115]
+    button b down: [132, 104, 115]
+    button b down: [132, 104, 115]
+    button b up
+    button a pressed
+    button 1 pressed
+    button a pressed
+    button home pressed
+    button b pressed
+    button b down: [129, 99, 128]
+    button b down: [129, 99, 128]
+    button b down: [129, 99, 128]
+    button b down: [129, 99, 128]
+    button b down: [129, 99, 128]
+    button b down: [131, 99, 127]
+    button b down: [132, 99, 127]
+    button b down: [132, 99, 127]
+    button b down: [132, 99, 127]
+    button b down: [132, 99, 127]
+    button b down: [127, 98, 127]
+    button b down: [126, 97, 126]
+    button b down: [126, 97, 126]
+    button b down: [126, 97, 126]
+    button b down: [125, 97, 125]
+    button b down: [123, 96, 125]
+    button b down: [123, 96, 125]
+    button b down: [123, 96, 125]
+    button b down: [123, 96, 125]
+    button b down: [123, 96, 125]
+    button b down: [121, 95, 123]
+    button b down: [121, 95, 120]
+    button b down: [121, 95, 120]
+    button b down: [121, 95, 120]
+    button b down: [121, 95, 120]
+    button b down: [122, 96, 118]
+    button b down: [123, 96, 116]
+    button b down: [123, 96, 116]
+    button b down: [123, 96, 116]
+    button b down: [123, 96, 116]
+    button b down: [124, 96, 116]
+    button b down: [124, 97, 117]
+    button b down: [124, 97, 117]
+    button b down: [124, 97, 117]
+    button b down: [124, 97, 117]
+    button b down: [124, 97, 117]
+    button b down: [124, 97, 117]
+    button b down: [124, 97, 117]
+    button b down: [124, 97, 117]
+    button b up
+    button 1 pressed
+    button 2 pressed
+    button 1 pressed
+    button 2 pressed
 
 
-Testing acceleration
+    mwm.led = 1
+    mwm.led = 0
+    mwm.rumble = true; sleep 0.2; mwm.rumble = false
 
-    swm.activate {|wiimote| puts "[ %3d, %3d, %3d ]" % wiimote.acc}
+    def mwm.on_btn_plus_press(wm) puts Time.now end
+    mwm.activate
+
 
 output:
 
-    ...
-    [ 115, 115, 145 ]
-    [ 115, 115, 145 ]
-    [ 116, 114, 145 ]
-    [ 116, 114, 145 ]
-    [ 116, 114, 145 ]
-    [ 117, 115, 146 ]
-    [ 117, 115, 146 ]
-    [ 117, 115, 146 ]
-    [ 117, 115, 146 ]
-    [ 119, 117, 146 ]
-    [ 119, 117, 146 ]
-    [ 119, 117, 146 ]
-    [ 115, 117, 143 ]
-    [ 115, 117, 143 ]
-    [ 115, 117, 143 ]
-    [ 116, 118, 143 ]
-    you pressed b
+    button left pressed
+    button right pressed
+    2013-01-20 23:43:26 +0000
+    button 2 pressed
+    button 1 pressed
 
 
-Testing termination within the block
-
-    swm.activate {|wiimote| puts "[ %3d, %3d, %3d ]" % wiimote.acc;  wiimote.active = false}
-    #=> [ 138, 118, 135 ]
-
-    swm.close # observe the Wiimote has disconnected
+Each button has 3 events: on_btn_[buttonid]_press, on_btn_[buttonid]_down, and on_btn_[buttonid]_up. The down and up events are useful when you want to hold down a button while capturing data from the accelarometer. Each default button event can overridden with your own code.
 
 ## Resources
 
-* [Wii Remote](http://en.wikipedia.org/wiki/Wii_Remote)
-* [Introducing the simple_wiimote gem](http://jamesrobertson.eu/snippets/2011/12/16/0101hrs.html)
-* [jrobertson/simple_wiimote](https://github.com/jrobertson/simple_wiimote)
+* [jrobertson/simple_wiimote](https://github.com/jrobertson/simple_wiimote)[Github.com]
 
-wiimote simple_wiimote gem wii events
