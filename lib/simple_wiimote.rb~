@@ -10,7 +10,7 @@ end
 
 class SimpleWiimote
 
-  attr_accessor :terminator, :events, :led, :rumble
+  attr_accessor :terminator, :led, :rumble
 
   def initialize()
 

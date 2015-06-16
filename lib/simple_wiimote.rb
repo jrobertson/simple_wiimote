@@ -109,11 +109,16 @@ class SimpleWiimote
       end
 
     end until ( not @wiimote.active )
+    
+    on_deactivated()
+    
   end
 
   def led=(val)      @led    = @wiimote.led    = val   end
   def rumble=(bool)  @rumble = @wiimote.rumble = bool  end
   def close()        @wiimote.close  end
+    
+  protected
     
   def on_btn_2_press(wm)      puts 'button 2 pressed'     end
   def on_btn_1_press(wm)      puts 'button 1 pressed'     end
@@ -133,6 +138,10 @@ class SimpleWiimote
     
   def on_btn_b_down(wm)
     puts 'button b down: ' + wm.acc.inspect       
+  end
+  
+  def on_deactivated()
+    puts 'wiimote deactivated'
   end
 
 end
