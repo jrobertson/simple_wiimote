@@ -113,9 +113,9 @@ class SimpleWiimote
       
       @wiimote.get_state
       @wiimote.active = true
-      sleep 0.1
+      sleep 0.01
       yield(@wiimote) if block_given?  
-      sleep 0.1
+      sleep 0.01
 
       if @wiimote.buttons > 0 then
 
