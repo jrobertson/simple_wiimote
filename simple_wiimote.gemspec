@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'simple_wiimote'
-  s.version = '0.4.0'
+  s.version = '0.4.1'
   s.summary = 'Use this gem with the Wii remote to handle button presses as well as to individually set LEDs on or off, or to make the device rumble.'
   s.authors = ['James Robertson']
   s.files = Dir['lib/simple_wiimote.rb']

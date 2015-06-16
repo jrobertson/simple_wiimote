@@ -4,6 +4,60 @@
 
 require 'cwiid'
 
+
+class Led
+  
+  HIGH = 1
+  LOW = 0  
+
+  attr_reader :state  
+
+  def initialize(parent)
+    @state, @status = LOW, :off
+    @parent = parent
+  end
+
+  def on(duration=nil)
+    @state, @status = HIGH, :on
+    @parent.on_ledchange
+    (sleep duration; self.off) if duration
+  end
+
+  def off()
+    
+    return if self.off?
+    @state, @status = LOW, :off
+    @parent.on_ledchange
+  end
+  
+  def blink(seconds=0.5, duration: nil)
+
+    @status = :blink
+    t2 = Time.now + duration if duration
+
+    Thread.new do
+      while @status == :blink do
+        @state = 1
+        (set_pin HIGH; sleep seconds; set_pin LOW; sleep seconds) 
+        self.off if duration and Time.now >= t2
+      end
+      
+    end
+  end
+  
+  alias stop off    
+
+  def on?()  @status == :on  end
+  def off?() @status == :off end  
+  
+  private
+  
+  def set_pin(state)
+    @state = state
+    @parent.on_ledchange
+  end
+end
+
 class WiiMote
   attr_accessor :active
 end
@@ -39,9 +93,10 @@ class SimpleWiimote
       r.merge x => h
     end
 
-    @events['void1'] = @events['void2'] = nil    
-
-    @terminator = ['1','2']
+    @events['void1'] = @events['void2'] = nil
+    @terminator = ['1','2']    
+    @led = 4.times.map { Led.new self}
+    
   end
 
   def activate()
@@ -58,7 +113,9 @@ class SimpleWiimote
       
       @wiimote.get_state
       @wiimote.active = true
+      sleep 0.1
       yield(@wiimote) if block_given?  
+      sleep 0.1
 
       if @wiimote.buttons > 0 then
 
@@ -114,9 +171,13 @@ class SimpleWiimote
     
   end
 
-  def led=(val)      @led    = @wiimote.led    = val   end
+
   def rumble=(bool)  @rumble = @wiimote.rumble = bool  end
   def close()        @wiimote.close  end
+    
+  def on_ledchange()
+    @wiimote.led = @led.map(&:state).reverse.join.to_i(2)
+  end
     
   protected
     
