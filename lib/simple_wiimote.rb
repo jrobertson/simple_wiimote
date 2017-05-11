@@ -2,60 +2,30 @@
 
 # file: simple_wiimote.rb
 
+require 'pinx'
 require 'cwiid'
 
 
-class Led
+class Led < PinX  
   
-  HIGH = 1
-  LOW = 0  
-
-  attr_reader :state  
-
   def initialize(parent)
-    @state, @status = LOW, :off
     @parent = parent
   end
-
-  def on(duration=nil)
-    @state, @status = HIGH, :on
-    @parent.on_ledchange
-    (sleep duration; self.off) if duration
-  end
-
-  def off()
-    
-    return if self.off?
-    @state, @status = LOW, :off
-    @parent.on_ledchange
+  
+  def state()
+    @on ? 1 : 0
   end
   
-  def blink(seconds=0.5, duration: nil)
+  protected
 
-    @status = :blink
-    t2 = Time.now + duration if duration
+  # set val with 0 (off) or 1 (on)
+  #
+  def set_pin(val)
 
-    Thread.new do
-      while @status == :blink do
-        @state = 1
-        (set_pin HIGH; sleep seconds; set_pin LOW; sleep seconds) 
-        self.off if duration and Time.now >= t2
-      end
+    super(val)
+    @parent.on_ledchange
       
-    end
-  end
-  
-  alias stop off    
-
-  def on?()  @status == :on  end
-  def off?() @status == :off end  
-  
-  private
-  
-  def set_pin(state)
-    @state = state
-    @parent.on_ledchange
-  end
+  end  
 end
 
 class WiiMote
