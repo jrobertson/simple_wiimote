@@ -33,10 +33,13 @@ class WiiMote
 end
 
 class SimpleWiimote
+  using ColouredText
 
   attr_accessor :terminator, :led, :rumble
 
-  def initialize()
+  def initialize(debug: false)
+    
+    @debug = debug
 
     puts 'Put Wiimote in discoverable mode now (press 1+2)...'
     
@@ -91,7 +94,7 @@ class SimpleWiimote
 
         val = @wiimote.buttons
         
-        @events.keys.reverse.each_with_index do |x,i|
+        @events.keys.reverse.each_with_index do |x,i|          
 
           n = @events.length - 1 - i
           next if x == 32 or x == 64
@@ -101,7 +104,10 @@ class SimpleWiimote
 
         end
         
-        @wiimote.active = (not (@terminator & pressed) == @terminator)
+        puts ('@terminator: ' + @terminator.inspect).debug if @debug
+        puts ('pressed: ' + pressed.inspect).debug if @debug
+        
+        @wiimote.active = (not ([@terminator].flatten & pressed) == @terminator)
             
         new_keypresses     = pressed            -  previously_pressed
         expired_keypresses = previously_pressed -  pressed
